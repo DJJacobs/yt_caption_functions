@@ -31,29 +31,47 @@ $(document).ready(function(){
 
 // On click of the submit button take video_id from input box
 // and assign to videoId variable. Variable is used in the first
-// .get to retrieve caption information (id, status, language) 
+// .GET to retrieve caption information (id, status, language) 
 // --------------------------------------------------
 $(document).on("click", "#submitButton", function() {
-        var videoId = $("#videoIdInput").val();
+        var videoId = $("#videoIdInput").val()
+        var array = videoId.split(",");
+        for (var i in array) {
+            console.log(array[i]);
+        }
         var count = 0;
-
+         $( "#yt_content" ).empty();
 
 // this is the first YouTube API v3 call to get the caption info for video_id. 
 // url: https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId={video_id}key={devkey}
 // --------------------------------------------------
-	$.get(
-			"https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: videoId, key: devkey },
-				function(data) {
-				       $.each(data.items, function(j, item){ 
-	                    capId = item.id;
+    $.get(
+            "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: videoId, key: devkey },
+                function(data) {
+                       $.each(data.items, function(j, item){ 
+                        capId = item.id;
                         capType = item.snippet.trackKind;
                         capLanguage = item.snippet.language;
-	                    // console.log("caption id: " + capId);
+                        // console.log("caption id: " + capId);
                      //    console.log("track type: " + capType);
                      //    console.log("language: " + capLanguage);
                         $("#yt_content").append("<li>Track ID #" + j + ": Caption Type: " + capType + " (" + capLanguage + ") <code>" + capId + "</code></li>");
-	                 })});
-    }); // submit onclick closing
+                     })});
+                    getVideoInfo();
+
+// Function to get title and thumbnail from submitted Video ID.
+    function getVideoInfo(){ 
+        $.get( 
+            "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: videoId, key: devkey}, 
+            function(data){ 
+                $.each(data.items, function(i, item){ 
+                    videoTitle = item.snippet.title;
+                    mediumThumb = item.snippet.thumbnails.default.url;
+                    $("#yt_content").prepend("<li>Title: " + videoTitle + "</br><img src='" + mediumThumb + "'></li>");
+                    }) 
+                }); 
+    } // getVideoInfo function closing
+}); // submit onclick closing
 
 //This is the delete caption operation. Takes caption ID from input box.
 //Then assigns to captionIDdelete variable.
@@ -96,6 +114,7 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
 
    }); // second onclick closing
 
+ $( "#yt_content" ).empty();
 
 });  // documentReady closing
 </script>
@@ -121,7 +140,7 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
 <div id ="content">
     <div id="yt_content"></div>
     <input type="text" placeholder="caption_id" id="capIdInput" />
-    <button type="button" class="deleteCaptionIDbutton">Delete Caption ID</button> requires authentication...
+    <button type="button" class="deleteCaptionIDbutton">Delete Caption</button> requires authentication...
 </div>
 
 </body>
