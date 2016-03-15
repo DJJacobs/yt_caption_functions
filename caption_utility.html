@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html>
+<head> 
+	<title>Captions</title>
+	<style>
+    body {background-color: rgba(0, 255, 0, 0.3); font-family: sans-serif;}
+    #content { padding: 10pt; border: 2px dashed gray; margin-top: 20px;}
+    .deleteCaptionIDbutton { background-color: #ff3333; font-size: 14px; margin-top: 10px; }
+    #submitButton { background-color: #grey; font-size: 15px; margin-top: 10px; }
+    #UserInputSpace { text-indent: 40px; margin-bottom: 12px;}
+    #videoIdName { text-indent: 40px;}
+    </style>
+    
+<script src="oauthio/oauth.js"></script>
+<script type="text/javascript" src="http://127.0.0.1/jquery-1.11.1.js"></script>
+<script src="https://apis.google.com/js/api.js" type="text/javascript"></script>
+
+<script>
+
+// define some variables
+var devkey ='AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo'; // not needed w/ oauth
+var titleSet = [];
+var videoidSet = [];
+var durationSet = [];
+var ytStyleDurationSet = [];
+var nextPageTokenVar;
+
+
+$(document).ready(function(){
+
+// On click of the submit button take video_id from input box
+// and assign to videoId variable. Variable is used in the first
+// .get to retrieve caption information (id, status, language) 
+// --------------------------------------------------
+$(document).on("click", "#submitButton", function() {
+        var videoId = $("#videoIdInput").val();
+        var count = 0;
+
+
+// this is the first YouTube API v3 call to get the caption info for video_id. 
+// url: https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId={video_id}key={devkey}
+// --------------------------------------------------
+	$.get(
+			"https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: videoId, key: devkey },
+				function(data) {
+				       $.each(data.items, function(j, item){ 
+	                    capId = item.id;
+                        capType = item.snippet.trackKind;
+                        capLanguage = item.snippet.language;
+	                    // console.log("caption id: " + capId);
+                     //    console.log("track type: " + capType);
+                     //    console.log("language: " + capLanguage);
+                        $("#yt_content").append("<li>Track ID #" + j + ": Caption Type: " + capType + " (" + capLanguage + ") <code>" + capId + "</code></li>");
+	                 })});
+    }); // submit onclick closing
+
+//This is the delete caption operation. Takes caption ID from input box.
+//Then assigns to captionIDdelete variable.
+//Then uses OAuthIO to get access token. 
+$(document).on("click", ".deleteCaptionIDbutton", function() {
+        var captionIDdelete = $("#capIdInput").val();
+        // alert("Sure you want to delete cap ID: " + captionIDdelete + "?");
+
+// this is the oauth.io call to get a token 
+// --------------------------------------------------
+        OAuth.initialize('blY6KW5VEsLVqft6EnuGw9sJx1Y')
+        OAuth.popup('youtube')
+        .done(function(result) {
+        token = result.access_token;
+        console.log("token: " + token);
+        deleteCap(token);
+        }); // oauth done function closing
+// --------------------------------------------------  
+
+   
+// Delete request using xhr. Can't (figure out how to) use AJAX because of cross domain problem. 
+// --------------------------------------------------
+  function deleteCap(token) {
+    var xhr = new XMLHttpRequest()
+;  // xhr.open('GET', 'https://www.googleapis.com/youtube/v3/channels?part=id&mine=true');
+  xhr.open('DELETE', 'https://www.googleapis.com/youtube/v3/captions?' + 'id=' + captionIDdelete);
+  xhr.setRequestHeader('Authorization','Bearer ' + token);
+  xhr.onload = function () {
+    if (xhr.status < 399) {
+    $("#yt_content").append("</br></br>Deletion successful - <code>" + xhr.status + "</code>");
+    }
+    else {
+     $("#yt_content").append("</br><code>" + xhr.responseText + xhr.status + "</code>");   
+    }
+  };
+  xhr.send();
+    }
+// ------------------------------------------------
+
+
+   }); // second onclick closing
+
+
+});  // documentReady closing
+</script>
+
+<body>
+<h1>>> YouTube Caption stuff</h1>
+    <p><strong>[updated 2016_03_15] </strong></br></br>
+    API Documentation for captions: <a href="https://developers.google.com/youtube/v3/docs/captions">YouTube API V3 Captions</a></br>
+    Test API calls: <a href="https://developers.google.com/apis-explorer/#p/youtube/v3/">API Explorer</a></br>
+    OAuth handling: <a href="https://oauth.io">oauth.io</a></br>
+    Test with this video id: <code>rJMc2MoucGQ | FpKpFh-hFWk</code></p>
+
+    <div id ="UserInputSpace">
+        <div id ="videoIdName">Video ID: <input type="text" placeholder="video_id" id="videoIdInput" />
+        <button id="submitButton">submit</button>
+    </div>
+
+        <li>API key: <code>AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo</code></li>
+        <li>Call structure: <code>GET https://www.googleapis.com/youtube/v3/captions</code></li>
+        <li id="nextPageToken">Current token: <code>(null) </li></code>
+    
+
+<div id ="content">
+    <div id="yt_content"></div>
+    <input type="text" placeholder="caption_id" id="capIdInput" />
+    <button type="button" class="deleteCaptionIDbutton">Delete Caption ID</button> requires authentication...
+</div>
+
+</body>
+</html>
