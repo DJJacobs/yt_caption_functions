@@ -19,12 +19,9 @@
 <script>
 
 // define some variables
-var devkey ='AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo'; // not needed w/ oauth
-var titleSet = [];
-var videoidSet = [];
-var durationSet = [];
-var ytStyleDurationSet = [];
-var nextPageTokenVar;
+var devkey ='AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo'; 
+var capIdSet = []; var capTypeSet = []; var capLanguageSet = []; 
+var titleSet = []; var videoidSet = []; var thumbnailSet = [];
 
 
 $(document).ready(function(){
@@ -35,42 +32,64 @@ $(document).ready(function(){
 // --------------------------------------------------
 $(document).on("click", "#submitButton", function() {
         var videoId = $("#videoIdInput").val()
-        var array = videoId.split(",");
-        for (var i in array) {
-            console.log(array[i]);
-        }
+        var videoidSet = videoId.split(","); //get comma separated array of video id's
+        // for (var i in array) { console.log(array[i]); }
         var count = 0;
          $( "#yt_content" ).empty();
 
 // this is the first YouTube API v3 call to get the caption info for video_id. 
 // url: https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId={video_id}key={devkey}
-// --------------------------------------------------
-    $.get(
-            "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: videoId, key: devkey },
-                function(data) {
-                       $.each(data.items, function(j, item){ 
-                        capId = item.id;
-                        capType = item.snippet.trackKind;
-                        capLanguage = item.snippet.language;
-                        // console.log("caption id: " + capId);
-                     //    console.log("track type: " + capType);
-                     //    console.log("language: " + capLanguage);
-                        $("#yt_content").append("<li>Track ID #" + j + ": Caption Type: " + capType + " (" + capLanguage + ") <code>" + capId + "</code></li>");
-                     })});
-                    getVideoInfo();
+// -------------------------------------------------- w0cZIlAUhY8,IFkPNo9lB1s,cdrFJ-1vTxk
+// function captionLoop(videoidSet){
+        $.each(videoidSet, function(i, val){
+                $.get( 
+                    "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
+                        function(data){ 
+                            $.each(data.items, function(k, item){ 
+                            titleSet.push(item.snippet.title);
+                            thumbnailSet.push(item.snippet.thumbnails.default.url);  
+                            $("#yt_content").append("Title: " + titleSet[i] + "</br>"); 
+                         $.get(
+                         "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
+                            function(data) {
+                              $.each(data.items, function(j, item){ 
+                               capIdSet.push(item.id); 
+                               $("#yt_content").append(capIdSet[j] + "</br>");
+                           })}); 
 
+                    })});               
+                  
+                // $.get(
+                //     "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
+                //         function(data) {
+                //            $.each(data.items, function(j, item){ 
+                //             capIdSet.push(item.id); 
+                //             $("#yt_content").append(capIdSet[j] + "</br>");
+                //          })});
+                  
+                // $("#yt_content").append("<li>Title: " + titleSet[count] + 
+                //     "</br><img src='" + thumbnailSet[count] + "'> " + "Caption Type: " + capTypeSet + " (" + capLanguageSet + ") <code>" + capIdSet + "</code></li>");        
+                console.log(val);
+                testArrays();
+                count++;
+    }); // .each closing
+// } //captionLoop closing
+
+function testArrays () {
+    console.log("Testing arrays:" + titleSet[count]);
+}
 // Function to get title and thumbnail from submitted Video ID.
-    function getVideoInfo(){ 
-        $.get( 
-            "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: videoId, key: devkey}, 
-            function(data){ 
-                $.each(data.items, function(i, item){ 
-                    videoTitle = item.snippet.title;
-                    mediumThumb = item.snippet.thumbnails.default.url;
-                    $("#yt_content").prepend("<li>Title: " + videoTitle + "</br><img src='" + mediumThumb + "'></li>");
-                    }) 
-                }); 
-    } // getVideoInfo function closing
+    // function getVideoInfo(val){ 
+    //     $.get( 
+    //         "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
+    //         function(data){ 
+    //             $.each(data.items, function(i, item){ 
+    //                 videoTitle = item.snippet.title;
+    //                 mediumThumb = item.snippet.thumbnails.default.url;
+    //                 $("#yt_content").append("<li>Title: " + videoTitle + "</br><img src='" + mediumThumb + "'></br></li>");
+    //                 }) 
+    //             }); 
+    // } // getVideoInfo function closing
 }); // submit onclick closing
 
 //This is the delete caption operation. Takes caption ID from input box.
@@ -125,7 +144,7 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
     API Documentation for captions: <a href="https://developers.google.com/youtube/v3/docs/captions">YouTube API V3 Captions</a></br>
     Test API calls: <a href="https://developers.google.com/apis-explorer/#p/youtube/v3/">API Explorer</a></br>
     OAuth handling: <a href="https://oauth.io">oauth.io</a></br>
-    Test with this video id: <code>rJMc2MoucGQ | FpKpFh-hFWk</code></p>
+    Test with this video id: <code>rJMc2MoucGQ,FpKpFh-hFWk</code></p>
 
     <div id ="UserInputSpace">
         <div id ="videoIdName">Video ID: <input type="text" placeholder="video_id" id="videoIdInput" />
