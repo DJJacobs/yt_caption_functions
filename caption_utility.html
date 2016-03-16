@@ -1,15 +1,17 @@
-
 <!DOCTYPE html>
 <html>
 <head> 
-	<title>Captions</title>
-	<style>
+    <title>Captions</title>
+    <style>
     body {background-color: rgba(0, 255, 0, 0.3); font-family: sans-serif;}
     #content { padding: 10pt; border: 2px dashed gray; margin-top: 20px;}
+    #yt_content {text-align: left; padding-top: 10px; padding-bottom: 10px;}
     .deleteCaptionIDbutton { background-color: #ff3333; font-size: 14px; margin-top: 10px; }
     #submitButton { background-color: #grey; font-size: 15px; margin-top: 10px; }
-    #UserInputSpace { text-indent: 40px; margin-bottom: 12px;}
+    #UserInputSpace {text-indent: 40px; margin-bottom: 12px;}
     #videoIdName { text-indent: 40px;}
+    .movieBorder {border: 2px red;}
+    
     </style>
     
 <script src="oauthio/oauth.js"></script>
@@ -17,15 +19,11 @@
 <script src="https://apis.google.com/js/api.js" type="text/javascript"></script>
 
 <script>
-
 // define some variables
 var devkey ='AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo'; 
 var capIdSet = []; var capTypeSet = []; var capLanguageSet = []; 
 var titleSet = []; var videoidSet = []; var thumbnailSet = [];
-
-
 $(document).ready(function(){
-
 // On click of the submit button take video_id from input box
 // and assign to videoId variable. Variable is used in the first
 // .GET to retrieve caption information (id, status, language) 
@@ -34,50 +32,45 @@ $(document).on("click", "#submitButton", function() {
         var videoId = $("#videoIdInput").val()
         var videoidSet = videoId.split(","); //get comma separated array of video id's
         // for (var i in array) { console.log(array[i]); }
-        var count = 0;
+        
          $( "#yt_content" ).empty();
-
 // this is the first YouTube API v3 call to get the caption info for video_id. 
 // url: https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId={video_id}key={devkey}
 // -------------------------------------------------- w0cZIlAUhY8,IFkPNo9lB1s,cdrFJ-1vTxk
-// function captionLoop(videoidSet){
-        $.each(videoidSet, function(i, val){
-                $.get( 
-                    "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
+
+        $.each(videoidSet, function(bigCount, val){
+               $.get( "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
                         function(data){ 
                             $.each(data.items, function(k, item){ 
-                            titleSet.push(item.snippet.title);
-                            thumbnailSet.push(item.snippet.thumbnails.default.url);  
-                            $("#yt_content").append("Title: " + titleSet[i] + "</br>"); 
-                         $.get(
-                         "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
+                            // titleSet.push(item.snippet.title);
+                            // thumbnailSet.push(item.snippet.thumbnails.default.url);  
+                            // $("#yt_content").append("<div id='movie" + bigCount + "'><li>" + titleSet[bigCount] + " (" + val + ")</br><img src='" + thumbnailSet[bigCount]
+                            //  + "'></br></div>"); 
+                            var title = item.snippet.title;
+                            var thumbnail = item.snippet.thumbnails.default.url;
+                            $("#yt_content").append("<div id='movie" + bigCount + "'><li>" + title + " (" + val + ")</br><img src='" + thumbnail
+                            + "'></br></div>");
+
+                         $.get( "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
                             function(data) {
-                              $.each(data.items, function(j, item){ 
-                               capIdSet.push(item.id); 
-                               $("#yt_content").append(capIdSet[j] + "</br>");
-                           })}); 
+                              $.each(data.items, function(j, item){
+                               var capId = item.id;
+                               var capType = item.snippet.trackKind;
+                               var capLanguage = item.snippet.language;
+                               console.log("this is caption index" + j + " and this is big count" + bigCount);
+                               $("#movie"+bigCount).append( capType + " - languge: (" + capLanguage + ") " + capId + "</br>").css("border", "1px dashed red", "margin", "10px,0px,10px,5px");
+
+                       })}); 
 
                     })});               
-                  
-                // $.get(
-                //     "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
-                //         function(data) {
-                //            $.each(data.items, function(j, item){ 
-                //             capIdSet.push(item.id); 
-                //             $("#yt_content").append(capIdSet[j] + "</br>");
-                //          })});
-                  
+                // capIdSet.length = 0;  
+   
                 // $("#yt_content").append("<li>Title: " + titleSet[count] + 
                 //     "</br><img src='" + thumbnailSet[count] + "'> " + "Caption Type: " + capTypeSet + " (" + capLanguageSet + ") <code>" + capIdSet + "</code></li>");        
-                console.log(val);
-                testArrays();
-                count++;
-    }); // .each closing
-// } //captionLoop closing
 
-function testArrays () {
-    console.log("Testing arrays:" + titleSet[count]);
-}
+    }); // .each closing
+
+
 // Function to get title and thumbnail from submitted Video ID.
     // function getVideoInfo(val){ 
     //     $.get( 
@@ -91,14 +84,12 @@ function testArrays () {
     //             }); 
     // } // getVideoInfo function closing
 }); // submit onclick closing
-
 //This is the delete caption operation. Takes caption ID from input box.
 //Then assigns to captionIDdelete variable.
 //Then uses OAuthIO to get access token. 
 $(document).on("click", ".deleteCaptionIDbutton", function() {
         var captionIDdelete = $("#capIdInput").val();
         // alert("Sure you want to delete cap ID: " + captionIDdelete + "?");
-
 // this is the oauth.io call to get a token 
 // --------------------------------------------------
         OAuth.initialize('blY6KW5VEsLVqft6EnuGw9sJx1Y')
@@ -109,7 +100,6 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
         deleteCap(token);
         }); // oauth done function closing
 // --------------------------------------------------  
-
    
 // Delete request using xhr. Can't (figure out how to) use AJAX because of cross domain problem. 
 // --------------------------------------------------
@@ -129,12 +119,8 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
   xhr.send();
     }
 // ------------------------------------------------
-
-
    }); // second onclick closing
-
  $( "#yt_content" ).empty();
-
 });  // documentReady closing
 </script>
 
@@ -144,17 +130,17 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
     API Documentation for captions: <a href="https://developers.google.com/youtube/v3/docs/captions">YouTube API V3 Captions</a></br>
     Test API calls: <a href="https://developers.google.com/apis-explorer/#p/youtube/v3/">API Explorer</a></br>
     OAuth handling: <a href="https://oauth.io">oauth.io</a></br>
-    Test with this video id: <code>rJMc2MoucGQ,FpKpFh-hFWk</code></p>
+    Test with this video id: </br><code>rJMc2MoucGQ,FpKpFh-hFWk,fnLHua_Gyo0</code></p>
 
     <div id ="UserInputSpace">
         <div id ="videoIdName">Video ID: <input type="text" placeholder="video_id" id="videoIdInput" />
         <button id="submitButton">submit</button>
-    </div>
+        </div>
 
-        <li>API key: <code>AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo</code></li>
+        
         <li>Call structure: <code>GET https://www.googleapis.com/youtube/v3/captions</code></li>
         <li id="nextPageToken">Current token: <code>(null) </li></code>
-    
+    </div>
 
 <div id ="content">
     <div id="yt_content"></div>
