@@ -5,12 +5,13 @@
     <style>
    /*body {background-color: rgba(0, 255, 0, 0.3); font-family: sans-serif;}  */
     #content { padding: 10pt; border: 2px solid gray; margin-top: 20px;}
-    #yt_content {text-align: left; padding-top: 10px; padding-bottom: 10px;}
+    #yt_content {text-align: left; padding-top: 10px; padding-bottom: 10px; width: 500px;}
     .deleteCaptionIDbutton { background-color: #ff3333; font-size: 14px; margin-top: 10px; }
     #submitButton { background-color: #grey; font-size: 15px; margin-top: 10px; }
     #UserInputSpace {text-indent: 40px; margin-bottom: 12px;}
     #videoIdName { text-indent: 1px;}
     .movieBorder {border: 2px red;}
+    #videoIdInput {width: 300px;}
     
     </style>
     
@@ -34,13 +35,13 @@ $(document).ready(function(){
 
 // On click of the submit button take video_id from input box
 // and assign to videoId variable. Variable is used in the first
-// .GET to retrieve caption information (id, status, language) 
+// .GET to retrieve caption information (id, status, language)  
 // --------------------------------------------------
 $(document).on("click", "#submitButton", function() {
-        var videoId = $("#videoIdInput").val()
+        var videoId = $("#videoIdInput").val().replace(/\s/g,",").replace(/https:\/\/www\.youtube\.com\/watch\?v\=/g, "").replace(/https\:\/\/youtu\.be\//g,"");
         var videoidSet = videoId.split(","); //get comma separated array of video id's
-        // for (var i in array) { console.log(array[i]); }
-        
+        console.log(videoidSet);
+       
          $( "#yt_content" ).empty();
 // this is the first YouTube API v3 call to get the caption info for video_id. 
 // url: https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId={video_id}key={devkey}
@@ -52,25 +53,36 @@ $(document).on("click", "#submitButton", function() {
                             $.each(data.items, function(k, item){ 
                             var title = item.snippet.title;
                             var thumbnail = item.snippet.thumbnails.default.url;
-                            $("#yt_content").append("<div id='movie" + bigCount + "'>This is div # " + bigCount + "<li>" + title + " (" + val + ")</br><img src='" + thumbnail
-                            + "'></br></div>");
-
+                            $("#yt_content").append("<div id='movie" + bigCount + "'><strong>" + title + " </strong> (" + val + ")</li></br><img src='" + thumbnail
+                            + "'></br>caption track/s: </div>");
+                           
                          $.get( "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
                             function(data) {
                               $.each(data.items, function(j, item){
                                var capId = item.id;
                                var capType = item.snippet.trackKind;
                                var capLanguage = item.snippet.language;
-                               console.log("this is caption index" + j + " and this is big count" + bigCount);
-                               $("#movie"+bigCount).append( capType + "/languge: (" + capLanguage + ") " + capId + "</br>").css("border", "1px dashed gray", "margin", "10px,0px,10px,5px");
+                               $("#movie"+bigCount).append("<span>"+ capType + "/languge: (" + capLanguage + ") </span></br>").css("border", "1px dashed gray", "margin", "10px,0px,10px,5px");
                        })}); 
                     })});               
     }); // .each closing
+        hoverFunction();
 }); // submit onclick closing
 
-
-
-
+ function hoverFunction() {
+    $( "#yt_content" ).on( "mouseenter", "span", function() {
+        $(this).css("background-color", "yellow");
+    });
+   $( "#yt_content" ).on( "mouseleave", "span", function() {
+        $(this).css("background-color", "white");
+    });
+    $( "#yt_content" ).on( "click", "span", function() {
+        $(this).css("background-color", "blue");
+        captionIDdelete = $(this).text();
+        console.log("Cap id from span:" + captionIDdelete);
+        $("#capIdInput").attr("placeholder",captionIDdelete);
+    });
+}
 //This is the delete caption operation. Takes caption ID from input box.
 //Then assigns to captionIDdelete variable.
 //Then uses OAuthIO to get access token. 
@@ -87,8 +99,7 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
         deleteCap(token);
         }); // oauth done function closing
 // --------------------------------------------------  
-   
-// Delete request using xhr. Can't (figure out how to) use AJAX because of cross-domain problem. 
+   // Delete request using xhr. Can't (figure out how to) use AJAX because of cross-domain problem. 
 // --------------------------------------------------
   function deleteCap(token) {
     var xhr = new XMLHttpRequest();
@@ -133,15 +144,18 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
 
     <div id ="UserInputSpace">
         <div id ="videoIdName">Provide video IDs (as comma separate list) below: </br> Then select the caption track to delete. </br>
-            <input type="text" placeholder="video_id" id="videoIdInput" />
+            <input type="text" placeholder="video_id,video_id,video_id" id="videoIdInput" />
         <button id="submitButton">submit</button>
         </div>
     </div>
 
 <div id ="content">
-    <div id="yt_content"></div>
+    <div id="yt_content">
+
+    </div>
     <input type="text" placeholder="caption_id" id="capIdInput" />
     <button type="button" class="deleteCaptionIDbutton">Delete Caption</button> requires authentication...
+    <div id="capList"></div>
 </div>
 
 </body>
