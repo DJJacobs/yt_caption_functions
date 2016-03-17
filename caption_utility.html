@@ -3,13 +3,13 @@
 <head> 
     <title>Captions</title>
     <style>
-    body {background-color: rgba(0, 255, 0, 0.3); font-family: sans-serif;}
-    #content { padding: 10pt; border: 2px dashed gray; margin-top: 20px;}
+   /*body {background-color: rgba(0, 255, 0, 0.3); font-family: sans-serif;}  */
+    #content { padding: 10pt; border: 2px solid gray; margin-top: 20px;}
     #yt_content {text-align: left; padding-top: 10px; padding-bottom: 10px;}
     .deleteCaptionIDbutton { background-color: #ff3333; font-size: 14px; margin-top: 10px; }
     #submitButton { background-color: #grey; font-size: 15px; margin-top: 10px; }
     #UserInputSpace {text-indent: 40px; margin-bottom: 12px;}
-    #videoIdName { text-indent: 40px;}
+    #videoIdName { text-indent: 1px;}
     .movieBorder {border: 2px red;}
     
     </style>
@@ -20,10 +20,18 @@
 
 <script>
 // define some variables
-var devkey =''; 
+// var devkey ='AIzaSyBoWMPAh9Tmp2BekV1xAhRvZzqlHLaFbYo'; 
+var devkey = '';
 var capIdSet = []; var capTypeSet = []; var capLanguageSet = []; 
 var titleSet = []; var videoidSet = []; var thumbnailSet = [];
+
 $(document).ready(function(){
+
+// retrieve api key from external file.
+        $.get("api_key.json", function(data, stats){
+             devkey = data.key;
+        });
+
 // On click of the submit button take video_id from input box
 // and assign to videoId variable. Variable is used in the first
 // .GET to retrieve caption information (id, status, language) 
@@ -42,13 +50,9 @@ $(document).on("click", "#submitButton", function() {
                $.get( "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
                         function(data){ 
                             $.each(data.items, function(k, item){ 
-                            // titleSet.push(item.snippet.title);
-                            // thumbnailSet.push(item.snippet.thumbnails.default.url);  
-                            // $("#yt_content").append("<div id='movie" + bigCount + "'><li>" + titleSet[bigCount] + " (" + val + ")</br><img src='" + thumbnailSet[bigCount]
-                            //  + "'></br></div>"); 
                             var title = item.snippet.title;
                             var thumbnail = item.snippet.thumbnails.default.url;
-                            $("#yt_content").append("<div id='movie" + bigCount + "'><li>" + title + " (" + val + ")</br><img src='" + thumbnail
+                            $("#yt_content").append("<div id='movie" + bigCount + "'>This is div # " + bigCount + "<li>" + title + " (" + val + ")</br><img src='" + thumbnail
                             + "'></br></div>");
 
                          $.get( "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
@@ -58,32 +62,15 @@ $(document).on("click", "#submitButton", function() {
                                var capType = item.snippet.trackKind;
                                var capLanguage = item.snippet.language;
                                console.log("this is caption index" + j + " and this is big count" + bigCount);
-                               $("#movie"+bigCount).append( capType + " - languge: (" + capLanguage + ") " + capId + "</br>").css("border", "1px dashed red", "margin", "10px,0px,10px,5px");
-
+                               $("#movie"+bigCount).append( capType + "/languge: (" + capLanguage + ") " + capId + "</br>").css("border", "1px dashed gray", "margin", "10px,0px,10px,5px");
                        })}); 
-
                     })});               
-                // capIdSet.length = 0;  
-   
-                // $("#yt_content").append("<li>Title: " + titleSet[count] + 
-                //     "</br><img src='" + thumbnailSet[count] + "'> " + "Caption Type: " + capTypeSet + " (" + capLanguageSet + ") <code>" + capIdSet + "</code></li>");        
-
     }); // .each closing
-
-
-// Function to get title and thumbnail from submitted Video ID.
-    // function getVideoInfo(val){ 
-    //     $.get( 
-    //         "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
-    //         function(data){ 
-    //             $.each(data.items, function(i, item){ 
-    //                 videoTitle = item.snippet.title;
-    //                 mediumThumb = item.snippet.thumbnails.default.url;
-    //                 $("#yt_content").append("<li>Title: " + videoTitle + "</br><img src='" + mediumThumb + "'></br></li>");
-    //                 }) 
-    //             }); 
-    // } // getVideoInfo function closing
 }); // submit onclick closing
+
+
+
+
 //This is the delete caption operation. Takes caption ID from input box.
 //Then assigns to captionIDdelete variable.
 //Then uses OAuthIO to get access token. 
@@ -101,16 +88,16 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
         }); // oauth done function closing
 // --------------------------------------------------  
    
-// Delete request using xhr. Can't (figure out how to) use AJAX because of cross domain problem. 
+// Delete request using xhr. Can't (figure out how to) use AJAX because of cross-domain problem. 
 // --------------------------------------------------
   function deleteCap(token) {
-    var xhr = new XMLHttpRequest()
-;  // xhr.open('GET', 'https://www.googleapis.com/youtube/v3/channels?part=id&mine=true');
+    var xhr = new XMLHttpRequest();
+    // xhr.open('GET', 'https://www.googleapis.com/youtube/v3/channels?part=id&mine=true');
   xhr.open('DELETE', 'https://www.googleapis.com/youtube/v3/captions?' + 'id=' + captionIDdelete);
   xhr.setRequestHeader('Authorization','Bearer ' + token);
   xhr.onload = function () {
     if (xhr.status < 399) {
-    $("#yt_content").append("</br></br>Deletion successful - <code>" + xhr.status + "</code>");
+    $("#yt_content").append("</br></br>Deletion successful - <code>" + xhr.status + "</code></br>ID: " + captionIDdelete + " deleted.");
     }
     else {
      $("#yt_content").append("</br><code>" + xhr.responseText + xhr.status + "</code>");   
@@ -125,21 +112,30 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
 </script>
 
 <body>
-<h1>>> YouTube Caption stuff</h1>
-    <p><strong>[updated 2016_03_15] </strong></br></br>
-    API Documentation for captions: <a href="https://developers.google.com/youtube/v3/docs/captions">YouTube API V3 Captions</a></br>
-    Test API calls: <a href="https://developers.google.com/apis-explorer/#p/youtube/v3/">API Explorer</a></br>
-    OAuth handling: <a href="https://oauth.io">oauth.io</a></br>
-    Test with this video id: </br><code>rJMc2MoucGQ,FpKpFh-hFWk,fnLHua_Gyo0</code></p>
+<h1>>> YouTube Caption Functions</h1>
+    <h2>Delete</h2>
+    <p><strong>(updated 2016_03_17)</strong></br></br>
+     <!-- API Documentation for captions: <a href="https://developers.google.com/youtube/v3/docs/captions">YouTube API V3 Captions</a></br> -->
+    <!-- Test API calls: <a href="https://developers.google.com/apis-explorer/#p/youtube/v3/">API Explorer</a></br> -->
+    <!-- OAuth handling: <a href="https://oauth.io">oauth.io</a></br> -->
+    Example video ID's: <code>rJMc2MoucGQ,FpKpFh-hFWk,fnLHua_Gyo0</code></p>
+
+
+        <ul style="list-style-type:square; margin-left: 0px;">
+        <li>Call structure:
+            <ul stlye ="list-style-type:none">
+                <li>GET https://www.googleapis.com/youtube/v3/captions</li>
+                <li>GET https://www.googleapis.com/youtube/v3/videos</li>
+                <li>DELETE https://www.googleapis.com/youtube/v3/captions</li>
+            </ul>
+        <li id="nextPageToken">Current token: <code>(null) </li></code>
+    </ul>
 
     <div id ="UserInputSpace">
-        <div id ="videoIdName">Video ID: <input type="text" placeholder="video_id" id="videoIdInput" />
+        <div id ="videoIdName">Provide video IDs (as comma separate list) below: </br> Then select the caption track to delete. </br>
+            <input type="text" placeholder="video_id" id="videoIdInput" />
         <button id="submitButton">submit</button>
         </div>
-
-        
-        <li>Call structure: <code>GET https://www.googleapis.com/youtube/v3/captions</code></li>
-        <li id="nextPageToken">Current token: <code>(null) </li></code>
     </div>
 
 <div id ="content">
