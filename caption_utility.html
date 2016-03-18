@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head> 
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon"/>
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon"/>
     <title>Captions</title>
     <style>
-   /*body {background-color: rgba(0, 255, 0, 0.3); font-family: sans-serif;}  */
-    #content { padding: 10pt; border: 2px solid gray; margin-top: 20px;}
-    #yt_content {text-align: left; padding-top: 10px; padding-bottom: 10px; width: 500px;}
+    body {background-color: white; font-family: "Open Sans", sans-serif;}
+    code {background-color: #e8e8e8; border: 1px solid #a8a8a8; border-radius: 3px;
+    padding: 0 2pt;
+    margin: 2pt;
+    font-family: "source-code-pro", Consolas, monospace;
+    font-size: .8em;}
+    #content { padding: 20pt; border: 2px solid gray; margin-top: 20px;}
+    #yt_content {float: center; text-align: left; padding-top: 10px; padding-bottom: 10px; width: 650px;}
+    #content {width: 700px;}
     .deleteCaptionIDbutton { background-color: #ff3333; font-size: 14px; margin-top: 10px; }
     #submitButton { background-color: #grey; font-size: 15px; margin-top: 10px; }
     #UserInputSpace {text-indent: 40px; margin-bottom: 12px;}
@@ -46,7 +54,6 @@ $(document).on("click", "#submitButton", function() {
 // this is the first YouTube API v3 call to get the caption info for video_id. 
 // url: https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId={video_id}key={devkey}
 // -------------------------------------------------- w0cZIlAUhY8,IFkPNo9lB1s,cdrFJ-1vTxk
-
         $.each(videoidSet, function(bigCount, val){
                $.get( "https://www.googleapis.com/youtube/v3/videos", { part:'snippet', id: val, key: devkey}, 
                         function(data){ 
@@ -54,15 +61,18 @@ $(document).on("click", "#submitButton", function() {
                             var title = item.snippet.title;
                             var thumbnail = item.snippet.thumbnails.default.url;
                             $("#yt_content").append("<div id='movie" + bigCount + "'><strong>" + title + " </strong> (" + val + ")</li></br><img src='" + thumbnail
-                            + "'></br>caption track/s: </div>");
+                            + "'></br>caption track/s: </br></div>");
                            
                          $.get( "https://www.googleapis.com/youtube/v3/captions", { part: "snippet", videoId: val, key: devkey },
                             function(data) {
                               $.each(data.items, function(j, item){
                                var capId = item.id;
+                               capIdSet.push(item.id);
                                var capType = item.snippet.trackKind;
                                var capLanguage = item.snippet.language;
-                               $("#movie"+bigCount).append("<span>"+ capType + "/languge: (" + capLanguage + ") </span></br>").css("border", "1px dashed gray", "margin", "10px,0px,10px,5px");
+                                
+                               $("#movie"+bigCount).append(capType + ": (" + capLanguage + ")<code><span>" + capId + "</code></span></br>")
+                               .css("border", "1px dashed gray", "margin", "10px,0px,10px,5px", "padding-top", "50px");
                        })}); 
                     })});               
     }); // .each closing
@@ -123,9 +133,8 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
 </script>
 
 <body>
-<h1>>> YouTube Caption Functions</h1>
-    <h2>Delete</h2>
-    <p><strong>(updated 2016_03_17)</strong></br></br>
+    <h2>>> YouTube Functions - Delete Caption Track/s</h2>
+    <p><strong>updated 2016_03_17</strong></br></br>
      <!-- API Documentation for captions: <a href="https://developers.google.com/youtube/v3/docs/captions">YouTube API V3 Captions</a></br> -->
     <!-- Test API calls: <a href="https://developers.google.com/apis-explorer/#p/youtube/v3/">API Explorer</a></br> -->
     <!-- OAuth handling: <a href="https://oauth.io">oauth.io</a></br> -->
@@ -133,14 +142,13 @@ $(document).on("click", ".deleteCaptionIDbutton", function() {
 
 
         <ul style="list-style-type:square; margin-left: 0px;">
-        <li>Call structure:
-            <ul stlye ="list-style-type:none">
-                <li>GET https://www.googleapis.com/youtube/v3/captions</li>
-                <li>GET https://www.googleapis.com/youtube/v3/videos</li>
-                <li>DELETE https://www.googleapis.com/youtube/v3/captions</li>
-            </ul>
-        <li id="nextPageToken">Current token: <code>(null) </li></code>
-    </ul>
+            <li>Call structure:
+                <ul stlye ="list-style-type:none">
+                    <li>GET https://www.googleapis.com/youtube/v3/captions</li>
+                    <li>GET https://www.googleapis.com/youtube/v3/videos</li>
+                    <li>DELETE https://www.googleapis.com/youtube/v3/captions</li>
+                </ul>
+        </ul>
 
     <div id ="UserInputSpace">
         <div id ="videoIdName">Provide video IDs (as comma separate list) below: </br> Then select the caption track to delete. </br>
